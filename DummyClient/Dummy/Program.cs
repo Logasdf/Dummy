@@ -36,6 +36,7 @@ namespace Dummy
                 {
                     case MessageTypeStrings.ASSIGN_USERNAME:
                         roomContext.SetUsername(data.DataMap[MessageTypeStrings.USERNAME]);
+                        Log(data.DataMap[MessageTypeStrings.USERNAME]);
                         if(isHost)
                         {
                             // Server에게 방생성 요청
@@ -140,11 +141,11 @@ namespace Dummy
             sw = new StreamWriter(outPipe);
             sw.AutoFlush = true;
 
-            servConn.CreateConnection(addr, port);
             packetManager.SetHandleMessage(PopMessage);
+            servConn.CreateConnection(addr, port);
 
-            sw.WriteLine("ROOM_CREATE_SUCESS");
-            outPipe.WaitForPipeDrain();
+            //sw.WriteLine("ROOM_CREATE_SUCESS");
+            //outPipe.WaitForPipeDrain();
         }
     }
 }

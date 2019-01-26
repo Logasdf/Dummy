@@ -82,39 +82,39 @@ namespace Controller
             Log("Host is Created!");
 
             //Host Process로부터 방을 성공적으로 생성했다는 신호를 받을 경우 진행.
-            string rtn = host.ReadLine();
-            if (rtn == "ROOM_CREATE_SUCESS")
-            {
-                Log("Room Create Success!!");
-            }
-            else
-            {
-                Log("Room Create Failed!!");
-            }
+            //string rtn = host.ReadLine();
+            //if (rtn == "ROOM_CREATE_SUCESS")
+            //{
+            //    Log("Room Create Success!!");
+            //}
+            //else
+            //{
+            //    Log("Room Create Failed!!");
+            //}
 
-            for (int i = 1; i < limit; ++i)
-            {
-                clntCnt++;
-                clients[i] = CreateProcess(false);
-                Log(string.Format("Clnt#{0} is Created!", clntCnt));
-                rtn = clients[i].ReadLine();
-                if (rtn == "READY")
-                {
-                    Log(string.Format("Clnt#{0} is Ready!", clntCnt));
-                    readyCnt++;
-                }
-            }
+            //for (int i = 1; i < limit; ++i)
+            //{
+            //    clntCnt++;
+            //    clients[i] = CreateProcess(false);
+            //    Log(string.Format("Clnt#{0} is Created!", clntCnt));
+            //    rtn = clients[i].ReadLine();
+            //    if (rtn == "READY")
+            //    {
+            //        Log(string.Format("Clnt#{0} is Ready!", clntCnt));
+            //        readyCnt++;
+            //    }
+            //}
 
-            if (readyCnt == limit - 1)
-            {
-                host.WriteLine("GAME_START");
-            }
-            else
-            {
-                Log("All client are not ready...");
-            }
+            //if (readyCnt == limit - 1)
+            //{
+            //    host.WriteLine("GAME_START");
+            //}
+            //else
+            //{
+            //    Log("All client are not ready...");
+            //}
 
-            Log("GameStart!");
+            //Log("GameStart!");
             Console.ReadLine();
         }
 

@@ -69,6 +69,7 @@ namespace Dummy
             while (!isEnd)
             {
                 int readBytes = await nStream.ReadAsync(buffer, 0, BUF_SIZE);
+                Program.Log(string.Format("ReadBytes: {0}", readBytes));
                 receiveCallback(buffer, readBytes);
                 Array.Clear(buffer, 0, BUF_SIZE);
             }
