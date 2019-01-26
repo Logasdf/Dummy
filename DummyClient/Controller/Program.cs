@@ -43,7 +43,7 @@ namespace Controller
             }
         }
 
-        static string dummyFileName = @"C:\Users\home\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
+        static string dummyFileName = @"C:\Users\Jins\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
         static int roomCnt = 0;
 
         string addr;
@@ -105,16 +105,16 @@ namespace Controller
                 }
             }
 
-            if (readyCnt == limit - 1)
-            {
-                host.WriteLine("GAME_START");
-            }
-            else
-            {
-                Log("All client are not ready...");
-            }
+            //if (readyCnt == limit - 1)
+            //{
+            //    host.WriteLine("GAME_START");
+            //}
+            //else
+            //{
+            //    Log("All client are not ready...");
+            //}
 
-            Log("GameStart!");
+            //Log("GameStart!");
             Console.ReadLine();
         }
 

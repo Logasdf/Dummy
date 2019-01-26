@@ -27,6 +27,7 @@ namespace Dummy
                 {
                     instance = new PacketManager();
                     instance.connection = ServerConnection.Instance;
+                    instance.sendBuffer = new byte[BUF_SIZE];
                     instance.connection.SetReceiveCallBack(instance.UnpackProcess);
                 }
                 return instance;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
+using System.Threading.Tasks;
 using Google.Protobuf.Packet.Room;
 
 namespace Dummy
@@ -35,6 +36,7 @@ namespace Dummy
                 switch (contentType)
                 {
                     case MessageTypeStrings.ASSIGN_USERNAME:
+                        //Log(data.DataMap[MessageTypeStrings.USERNAME]);
                         roomContext.SetUsername(data.DataMap[MessageTypeStrings.USERNAME]);
                         if(isHost)
                         {
@@ -66,6 +68,7 @@ namespace Dummy
                 
                 if(isHost)
                 {
+                    Log("ROOM_CREATE_SUCCESS");
                     sw.WriteLine("ROOM_CREATE_SUCESS");
                     outPipe.WaitForPipeDrain();
 
@@ -125,11 +128,11 @@ namespace Dummy
 
                 addr = args[2];
                 port = Convert.ToInt32(args[3]);
+                roomName = args[4];
 
                 if (args.Length > 5)
                 {
                     isHost = true;
-                    roomName = args[4];
                     limit = args[5];
                 }
             }
@@ -143,8 +146,11 @@ namespace Dummy
             servConn.CreateConnection(addr, port);
             packetManager.SetHandleMessage(PopMessage);
 
-            sw.WriteLine("ROOM_CREATE_SUCESS");
-            outPipe.WaitForPipeDrain();
+            while(true)
+            {
+                Task rtn = servConn.StartRecvThread();
+                rtn.Wait();
+            }
         }
     }
 }
