@@ -43,7 +43,7 @@ namespace Controller
             }
         }
 
-        static string dummyFileName = @"C:\Users\home\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
+        static string dummyFileName = @"C:\Users\Jins\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
         static int roomCnt = 0;
 
         string addr;
@@ -104,6 +104,28 @@ namespace Controller
             //        readyCnt++;
             //    }
             //}
+            string rtn = host.ReadLine();
+            if (rtn == "ROOM_CREATE_SUCESS")
+            {
+                Log("Room Create Success!!");
+            }
+            else
+            {
+                Log("Room Create Failed!!");
+            }
+
+            for (int i = 1; i < limit; ++i)
+            {
+                clntCnt++;
+                clients[i] = CreateProcess(false);
+                Log(string.Format("Clnt#{0} is Created!", clntCnt));
+                rtn = clients[i].ReadLine();
+                if (rtn == "READY")
+                {
+                    Log(string.Format("Clnt#{0} is Ready!", clntCnt));
+                    readyCnt++;
+                }
+            }
 
             //if (readyCnt == limit - 1)
             //{
