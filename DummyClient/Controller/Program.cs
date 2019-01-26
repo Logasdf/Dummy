@@ -43,14 +43,13 @@ namespace Controller
             }
         }
 
-        static string dummyFileName = @"C:\Users\Jins\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
+        static string dummyFileName = @"C:\Users\home\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
         static int roomCnt = 0;
 
         string addr;
         int port;
 
         string roomName;
-        string args;
         int readyCnt;
         int clntCnt;
         int limit;
@@ -68,7 +67,6 @@ namespace Controller
             this.port = port;
             this.roomName = roomName;
             this.limit = limit;
-            args = string.Format("{0} {1}", roomName, limit);
             clients = new ProcessContext[limit];
         }
 
@@ -77,33 +75,10 @@ namespace Controller
             Log("Process Start!!");
 
             readyCnt = clntCnt = 0;
-            host = clients[clntCnt++] = CreateProcess(true, args);
+            host = clients[clntCnt++] = CreateProcess(true);
 
             Log("Host is Created!");
 
-            //Host Process로부터 방을 성공적으로 생성했다는 신호를 받을 경우 진행.
-            //string rtn = host.ReadLine();
-            //if (rtn == "ROOM_CREATE_SUCESS")
-            //{
-            //    Log("Room Create Success!!");
-            //}
-            //else
-            //{
-            //    Log("Room Create Failed!!");
-            //}
-
-            //for (int i = 1; i < limit; ++i)
-            //{
-            //    clntCnt++;
-            //    clients[i] = CreateProcess(false);
-            //    Log(string.Format("Clnt#{0} is Created!", clntCnt));
-            //    rtn = clients[i].ReadLine();
-            //    if (rtn == "READY")
-            //    {
-            //        Log(string.Format("Clnt#{0} is Ready!", clntCnt));
-            //        readyCnt++;
-            //    }
-            //}
             string rtn = host.ReadLine();
             if (rtn == "ROOM_CREATE_SUCESS")
             {
@@ -127,16 +102,16 @@ namespace Controller
                 }
             }
 
-            //if (readyCnt == limit - 1)
-            //{
-            //    host.WriteLine("GAME_START");
-            //}
-            //else
-            //{
-            //    Log("All client are not ready...");
-            //}
+            if (readyCnt == limit - 1)
+            {
+                host.WriteLine("GAME_START");
+            }
+            else
+            {
+                Log("All client are not ready...");
+            }
 
-            //Log("GameStart!");
+            Log("GameStart!");
             Console.ReadLine();
         }
 
@@ -148,7 +123,7 @@ namespace Controller
                 Console.Write(string.Format("[Controller:Case#{0}] {1}", roomCnt, message));
         }
 
-        private ProcessContext CreateProcess(bool isHost, string args = "")
+        private ProcessContext CreateProcess(bool isHost)
         {
             try
             {
@@ -175,10 +150,12 @@ namespace Controller
                 sb.Append(addr);
                 sb.Append(' ');
                 sb.Append(port);
+                sb.Append(' ');
+                sb.Append(roomName);
                 if(isHost)
                 {
                     sb.Append(' ');
-                    sb.Append(args);
+                    sb.Append(limit);
                 }
                 psInfo.Arguments = sb.ToString();
                 Log(psInfo.Arguments);

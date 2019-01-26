@@ -65,7 +65,7 @@ namespace Dummy
 
         public async Task StartRecvThread()
         {  
-            Program.Log("ReadAsync");
+            //Program.Log("ReadAsync");
             int readBytes = await nStream.ReadAsync(buffer, 0, BUF_SIZE);
             receiveCallback(buffer, readBytes);
             Array.Clear(buffer, 0, BUF_SIZE);

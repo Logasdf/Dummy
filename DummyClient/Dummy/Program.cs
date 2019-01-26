@@ -36,7 +36,6 @@ namespace Dummy
                 switch (contentType)
                 {
                     case MessageTypeStrings.ASSIGN_USERNAME:
-                        //Log(data.DataMap[MessageTypeStrings.USERNAME]);
                         roomContext.SetUsername(data.DataMap[MessageTypeStrings.USERNAME]);
                         Log(data.DataMap[MessageTypeStrings.USERNAME]);
                         if(isHost)
@@ -106,7 +105,6 @@ namespace Dummy
                 {
                     Log("Game Start Signal from Server");
                     //Dummy Data 송신
-
                 }
             }
         }
@@ -145,12 +143,13 @@ namespace Dummy
             sw.AutoFlush = true;
 
             packetManager.SetHandleMessage(PopMessage);
-            servConn.CreateConnection(addr, port);
+            Task conn = servConn.CreateConnection(addr, port);
+            conn.Wait();
 
             while(true)
             {
-                Task rtn = servConn.StartRecvThread();
-                rtn.Wait();
+                Task recv = servConn.StartRecvThread();
+                recv.Wait();
             }
         }
     }
