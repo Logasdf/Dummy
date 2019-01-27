@@ -13,6 +13,7 @@ namespace Controller
         static private readonly string IP = "210.178.233.151";
         static private readonly string PORT = "9910";
         static private readonly string LIMIT = "8";
+        static public readonly string PATH = @"C:\Users\home\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
 
         static void Main(string[] args)
         {
@@ -21,11 +22,11 @@ namespace Controller
             string limit;
             while(true)
             {
-                Console.WriteLine("IP를 입력하세요: (Default=127.0.0.1)");
+                Console.WriteLine("IP를 입력하세요: (Default={0})", IP);
                 ip = Console.ReadLine();
-                Console.WriteLine("Port를 입력하세요: (Default=9910)");
+                Console.WriteLine("Port를 입력하세요: (Default={0})", PORT);
                 port = Console.ReadLine();
-                Console.WriteLine("방 인원수를 입력하세요: (Defulat=8)");
+                Console.WriteLine("방 인원수를 입력하세요: (Defulat={0})", LIMIT);
                 limit = Console.ReadLine();
 
                 if (ip == "")
@@ -72,7 +73,7 @@ namespace Controller
             }
         }
 
-        static string dummyFileName = @"C:\Users\home\Desktop\dummy\DummyClient\Dummy\bin\Debug\Dummy.exe";
+        static string dummyFileName = Program.PATH;
         static int roomCnt = 0;
 
         string addr;
