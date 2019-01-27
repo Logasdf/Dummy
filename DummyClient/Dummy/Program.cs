@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
+using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using Google.Protobuf.Packet.Room;
+using Google.Protobuf.State;
 
 namespace Dummy
 {
@@ -12,8 +15,11 @@ namespace Dummy
         static ServerConnection servConn = ServerConnection.Instance;
         static RoomContext roomContext = RoomContext.GetInstance();
         static PacketManager packetManager = PacketManager.Instance;
+        static DummyFactory factory;
+
         static bool isHost = false;
-        static bool isEnter = false;
+        static bool created = false;
+        static int enter = 0;
         static int port = 0;
         static string limit = "";
         static string addr = "";
@@ -22,9 +28,63 @@ namespace Dummy
         static string strOutPipeHandle = "";
         static AnonymousPipeClientStream inPipe = null;
         static AnonymousPipeClientStream outPipe = null;
+        static Timer timer;
+
+        static int roomId;
+        static string clntName;
 
         static StreamReader sr = null;
         static StreamWriter sw = null;
+
+        public static void Log(string message)
+        {
+            Console.WriteLine(string.Format("[Client:{0}] {1}", roomContext.GetMyUsername(), message));
+        }
+
+        static void TimerEvent(object sender, ElapsedEventArgs e)
+        {
+            WorldState dummy = factory.CreateDummy(roomId, clntName);
+            packetManager.PackMessage(protoObj: dummy);
+        }
+
+        static void Main(string[] args)
+        {
+            factory = new DummyFactory();
+            timer = new Timer();
+            timer.Interval = 15.5;
+            timer.Elapsed += new ElapsedEventHandler(TimerEvent);
+
+            strOutPipeHandle = args[0];
+            strInPipeHandle = args[1];
+
+            outPipe =
+                new AnonymousPipeClientStream(PipeDirection.Out, strOutPipeHandle);
+            inPipe =
+                new AnonymousPipeClientStream(PipeDirection.In, strInPipeHandle);
+
+            addr = args[2];
+            port = Convert.ToInt32(args[3]);
+            roomName = args[4];
+
+            if (args.Length > 5)
+            {
+                isHost = true;
+                limit = args[5];
+            }
+
+            sr = new StreamReader(inPipe);
+            sw = new StreamWriter(outPipe);
+
+            packetManager.SetHandleMessage(PopMessage);
+            Task conn = servConn.CreateConnection(addr, port);
+            conn.Wait();
+
+            while (true)
+            {
+                Task recv = servConn.StartRecvThread();
+                recv.Wait();
+            }
+        }
 
         public static void PopMessage(object obj, Type type)
         {
@@ -37,8 +97,8 @@ namespace Dummy
                 {
                     case MessageTypeStrings.ASSIGN_USERNAME:
                         roomContext.SetUsername(data.DataMap[MessageTypeStrings.USERNAME]);
-                        Log(data.DataMap[MessageTypeStrings.USERNAME]);
-                        if(isHost)
+                        clntName = roomContext.GetMyUsername();
+                        if (isHost)
                         {
                             // Server에게 방생성 요청
                             Data temp = new Data();
@@ -65,18 +125,23 @@ namespace Dummy
                 // Accept Create/Enter Room
                 RoomInfo room = (RoomInfo)obj;
                 roomContext.SetRoomInfo(room);
-                
-                if(isHost)
+                roomId = roomContext.RoomId;
+
+                if (isHost)
                 {
-                    Log("ROOM_CREATE_SUCCESS");
-                    sw.WriteLine("ROOM_CREATE_SUCESS");
+                    if (created)
+                        return;
+
+                    created = true;
+                    sw.AutoFlush = true;
+                    sw.WriteLine("ROOM_CREATE_SUCCESS");
                     outPipe.WaitForPipeDrain();
 
                     // Controller로부터 Start 신호 받기
                     string rtn = sr.ReadLine();
                     if (rtn == "GAME_START")
                     {
-                        Log("Receive Start Signal From Controller!");
+                        Log("Get Start Signal from controller");
                         Data request = new Data();
                         request.DataMap.Add(MessageTypeStrings.CONTENT_TYPE, MessageTypeStrings.START_GAME);
                         request.DataMap.Add(MessageTypeStrings.ROOMID, roomContext.RoomId.ToString());
@@ -85,71 +150,38 @@ namespace Dummy
                 }
                 else
                 {
-                    if (!isEnter)
+                    if (enter == 0)
                     {
-                        isEnter = true;
+                        Log("Ready_EVENT");
+                        enter++;
                         packetManager.PackMessage(MessageType.READY_EVENT);
                     }
-                    else
+                    else if(enter == 1)
                     {
+                        Log("Ready");
+                        enter++;
+                        sw.AutoFlush = true;
                         sw.WriteLine("READY");
                         outPipe.WaitForPipeDrain();
                     }
                 }
 
             }
-            else if(type.Name == MessageTypeStrings.INT32)
+            else if (type.Name == MessageTypeStrings.INT32)
             {
                 int messageType = (int)obj;
                 if (messageType == MessageType.START_GAME)
                 {
-                    Log("Game Start Signal from Server");
+                    Log("GAME_START!");
+                    sw.WriteLine("START");
                     //Dummy Data 송신
+                    timer.Start();
                 }
             }
-        }
-
-        public static void Log(string message)
-        {
-            Console.WriteLine(string.Format("[Client:{0}] {1}", roomContext.GetMyUsername(), message));
-        }
-
-        static void Main(string[] args)
-        {
-            if (args.Length > 0)
+            else if(type.Name == MessageTypeStrings.WORLDSTATE)
             {
-                strOutPipeHandle = args[0];
-                strInPipeHandle = args[1];
-                outPipe =
-                    new AnonymousPipeClientStream(PipeDirection.Out, strOutPipeHandle);
-                inPipe =
-                    new AnonymousPipeClientStream(PipeDirection.In, strInPipeHandle);
-
-                addr = args[2];
-                port = Convert.ToInt32(args[3]);
-                roomName = args[4];
-
-                if (args.Length > 5)
-                {
-                    isHost = true;
-                    limit = args[5];
-                }
-            }
-
-            Log(string.Format("{0}/{1}/{2}/{3}", strOutPipeHandle, strInPipeHandle, addr, port));
-
-            sr = new StreamReader(inPipe);
-            sw = new StreamWriter(outPipe);
-            sw.AutoFlush = true;
-
-            packetManager.SetHandleMessage(PopMessage);
-            Task conn = servConn.CreateConnection(addr, port);
-            conn.Wait();
-
-            while(true)
-            {
-                Task recv = servConn.StartRecvThread();
-                recv.Wait();
+                //Nothing;
+                //Log(DummyFactory.ToString((WorldState)obj));
             }
         }
     }

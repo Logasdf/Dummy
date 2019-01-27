@@ -9,10 +9,38 @@ namespace Controller
 {
     class Program
     {
+        //static private readonly string IP = "127.0.0.1";
+        static private readonly string IP = "210.178.233.151";
+        static private readonly string PORT = "9910";
+        static private readonly string LIMIT = "8";
+
         static void Main(string[] args)
         {
-            TestRoom test = new TestRoom();
-            test.StartTestRoom();
+            string ip;
+            string port;
+            string limit;
+            while(true)
+            {
+                Console.WriteLine("IP를 입력하세요: (Default=127.0.0.1)");
+                ip = Console.ReadLine();
+                Console.WriteLine("Port를 입력하세요: (Default=9910)");
+                port = Console.ReadLine();
+                Console.WriteLine("방 인원수를 입력하세요: (Defulat=8)");
+                limit = Console.ReadLine();
+
+                if (ip == "")
+                    ip = IP;
+                if (port == "")
+                    port = PORT;
+                if (limit == "")
+                    limit = LIMIT;
+
+                TestRoom test = new TestRoom(ip, Convert.ToInt32(port), Convert.ToInt32(limit));
+                test.StartTestRoom();
+
+                Console.WriteLine("방을 더 생성하려면 Enter를 누르세요.");
+                Console.ReadLine();
+            }
         }
     }
 
@@ -27,7 +55,7 @@ namespace Controller
             private PipeStream outPipe;
             public PipeStream OutPipe { get { return outPipe; } set { outPipe = value; } }
             private StreamWriter sw;
-            public StreamWriter SW { get { return sw; } set { sw = value; sw.AutoFlush = true; } }
+            public StreamWriter SW { get { return sw; } set { sw = value; } }
             private StreamReader sr;
             public StreamReader SR { get { return sr; } set { sr = value; } }
 
@@ -38,6 +66,7 @@ namespace Controller
 
             public void WriteLine(string message)
             {
+                sw.AutoFlush = true;
                 sw.WriteLine(message);
                 outPipe.WaitForPipeDrain();
             }
@@ -57,7 +86,7 @@ namespace Controller
         ProcessContext host;
         ProcessContext[] clients;
 
-        public TestRoom(string addr = "127.0.0.1", int port = 9910, int limit = 8) 
+        public TestRoom(string addr, int port, int limit) 
             : this(addr, port, string.Format("Room#{0}", roomCnt++), limit) { }
 
 
@@ -72,15 +101,14 @@ namespace Controller
 
         public void StartTestRoom()
         {
+            string msg;
             Log("Process Start!!");
 
             readyCnt = clntCnt = 0;
             host = clients[clntCnt++] = CreateProcess(true);
 
-            Log("Host is Created!");
-
-            string rtn = host.ReadLine();
-            if (rtn == "ROOM_CREATE_SUCESS")
+            msg = host.ReadLine();
+            if (msg == "ROOM_CREATE_SUCCESS")
             {
                 Log("Room Create Success!!");
             }
@@ -93,26 +121,25 @@ namespace Controller
             {
                 clntCnt++;
                 clients[i] = CreateProcess(false);
-                Log(string.Format("Clnt#{0} is Created!", clntCnt));
-                rtn = clients[i].ReadLine();
-                if (rtn == "READY")
+                msg = clients[i].ReadLine();
+                if (msg == "READY")
                 {
-                    Log(string.Format("Clnt#{0} is Ready!", clntCnt));
                     readyCnt++;
                 }
             }
 
             if (readyCnt == limit - 1)
             {
+                //Log("Game Start!");
                 host.WriteLine("GAME_START");
             }
-            else
+
+            for(int i = 0; i < limit; ++i)
             {
-                Log("All client are not ready...");
+                clients[i].ReadLine();
             }
 
-            Log("GameStart!");
-            Console.ReadLine();
+            Log("Process End!!");
         }
 
         private void Log(string message, bool newLine = true)
@@ -132,10 +159,9 @@ namespace Controller
 
                 psInfo.FileName = dummyFileName;
                 psInfo.CreateNoWindow = false;
-                psInfo.UseShellExecute = false; // true일 경우, Client Process에 넘긴 Pipe에 문제가 생김.
-                //psInfo.RedirectStandardInput = false;
-                //psInfo.RedirectStandardOutput = false;
-                //psInfo.RedirectStandardError = false;
+                // true일 경우, Client Process에 넘긴 Pipe에 문제가 생김.
+                // 정확히 말하면, Pipe Handle이 상속되지 않는다.
+                psInfo.UseShellExecute = false; 
 
                 pc.InPipe
                     = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
@@ -158,7 +184,7 @@ namespace Controller
                     sb.Append(limit);
                 }
                 psInfo.Arguments = sb.ToString();
-                Log(psInfo.Arguments);
+                //Log(psInfo.Arguments);
 
                 pc.Proc = Process.Start(psInfo);
                 ((AnonymousPipeServerStream)pc.InPipe).DisposeLocalCopyOfClientHandle();
